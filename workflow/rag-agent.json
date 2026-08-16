@@ -1,0 +1,352 @@
+{
+  "name": "RAG_Eval",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## RAG Agent",
+        "height": 672,
+        "width": 1904,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -240
+      ],
+      "id": "e11e1d7d-f977-417e-8be8-aaff8f969bf4",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        -160
+      ],
+      "id": "cf15ebc9-794b-4061-9067-5dd331aac5f7",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4ZRRiQsXO0bEJmwv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_6182106945809569947"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        144,
+        -160
+      ],
+      "id": "e49f88ee-bc28-4bd0-8446-3199527a2d78",
+      "name": "Customer Support Label",
+      "webhookId": "355f9dd0-2604-4c8b-b446-999b85c20fbd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4ZRRiQsXO0bEJmwv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').item.json.snippet }}",
+        "options": {
+          "systemMessage": "You are a ShopNest customer support assistant.\n\nYou have access to a knowledge base tool. Use it to answer customer questions.\n\nRules:\n- Search the knowledge base for every question\n- Answer using only what you find\n- If not found, say \"I don't have that information available\"\n- Keep answers short and clear\n- End every answer with \"Is there anything else I can help you with?\"\n- For greetings like Hi or Hello, just welcome the customer",
+          "returnIntermediateSteps": true,
+          "batching": {}
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        368,
+        -160
+      ],
+      "id": "c0dec97f-1f60-4a9d-9b1f-89069b5af22a",
+      "name": "RAG Agent",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        -160
+      ],
+      "id": "72321efe-3e69-4a66-8fa4-110c30dbf0b1",
+      "name": "Reply to a message",
+      "webhookId": "a733a041-1ec1-4b44-909a-0b7ed1c1d68d",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4ZRRiQsXO0bEJmwv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        400,
+        64
+      ],
+      "id": "2ff25351-7b15-4056-a58a-de17f37d920d",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hXAJTrq2GCwaGLfs",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "shopnest_knowledge_base",
+        "toolDescription": "Use this tool to search the shopnest knowledge base. \nInput must be a search query string about shopnest \nproducts, shipping, returns, refunds, or policies.",
+        "tableName": {
+          "__rl": true,
+          "value": "doc",
+          "mode": "list",
+          "cachedResultName": "doc"
+        },
+        "options": {
+          "queryName": "match_doc"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        64
+      ],
+      "id": "1b0834b1-d8e5-4bcf-bad6-0b4a1b52883f",
+      "name": "Supabase Vector Store (Retrieve)",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fjJYTDTWUWWBuF40",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        608,
+        272
+      ],
+      "id": "dd87e7d5-84fb-4bcb-9e7a-0b502d04fa52",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hXAJTrq2GCwaGLfs",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1e5xJTWl9QdBN2XegJZc3lBVBdMMc94nofQLAXVjERB4",
+          "mode": "list",
+          "cachedResultName": "RAGAS Test Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1e5xJTWl9QdBN2XegJZc3lBVBdMMc94nofQLAXVjERB4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1e5xJTWl9QdBN2XegJZc3lBVBdMMc94nofQLAXVjERB4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "answer": "={{ $('RAG Agent').item.json.output }}",
+            "question": "={{ $('Gmail Trigger').item.json.snippet }}",
+            "context": "={{ JSON.parse(JSON.parse($('RAG Agent').item.json.intermediateSteps[0].observation)[0].text).pageContent }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "question",
+              "displayName": "question",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "answer",
+              "displayName": "answer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1072,
+        -160
+      ],
+      "id": "602eaa47-6e88-4447-9c06-da12686d8fbe",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eJj5L4G8yt2TamGy",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Customer Support Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Support Label": {
+      "main": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Agent": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store (Retrieve)": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store (Retrieve)",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "983649ce-93c1-4163-bf15-842a82705d80",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c60e4f3b0afc16c7873edd72c102bc9d2a99a467196d2d11d9fe5cf6100dacb5"
+  },
+  "nodeGroups": [],
+  "id": "Rq7ks23Zq1Q8whpI",
+  "tags": []
+}

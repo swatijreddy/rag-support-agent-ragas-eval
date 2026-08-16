@@ -1,0 +1,20 @@
+# Claude API client
+anthropic
+
+# Loads API key from .env
+python-dotenv
+
+# RAG evaluation framework — Faithfulness, Context Precision/Recall, Answer Relevancy
+ragas==0.3.9
+
+# Lets RAGAS use Claude (via Anthropic) as its judge model
+langchain-anthropic
+
+# Supporting utilities RAGAS/LangChain rely on internally
+langchain-community
+
+# Reads/writes the CSV test data and results files
+pandas
+
+# Formatted terminal output for displaying results
+rich
